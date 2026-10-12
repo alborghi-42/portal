@@ -1,0 +1,17 @@
+{{define "content"}}
+<h1>Projects</h1>
+<p class="muted">The 42 common core and beyond. Projects marked <span class="badge live">live</span> are running right now; open one to try it.</p>
+<table class="projects">
+  <thead><tr><th>Project</th><th>Status</th><th class="num">Mark</th><th class="hide-sm num">Date</th></tr></thead>
+  <tbody>
+  {{range .}}
+    <tr>
+      <td class="name"><a href="/{{.Key}}/about">{{.Title}}</a>{{if .Live}} <span class="badge live">live</span>{{end}}</td>
+      <td>{{template "status" .}}</td>
+      <td class="num mark">{{.MarkText}}</td>
+      <td class="hide-sm num muted">{{if .MarkedAt}}{{date .MarkedAt}}{{else}}{{date (ptr .StartedAt)}}{{end}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+{{end}}

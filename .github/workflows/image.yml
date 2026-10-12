@@ -1,0 +1,40 @@
+name: image
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # Read at runtime from main; editing it needs no new image.
+      - projects.yaml
+      - README.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ghcr.io/alborghi-42/portal:${{ steps.meta.outputs.sha }}
+            ghcr.io/alborghi-42/portal:latest
+      - run: |
+          echo "Image: ghcr.io/alborghi-42/portal:${{ steps.meta.outputs.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deploy: set image.tag to \"${{ steps.meta.outputs.sha }}\" in CodeDrevia/simple-server apps/portal42/values.yaml" >> "$GITHUB_STEP_SUMMARY"

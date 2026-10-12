@@ -1,0 +1,20 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "content"}}
+{{if .Offline}}<p class="notice">{{.Title}} isn't running right now. Here's what it is; the code is on GitHub.</p>{{end}}
+<h1>{{.Title}}</h1>
+{{if .Description}}<p>{{.Description}}</p>{{end}}
+{{with .Stack}}<ul class="stack">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}
+<dl class="facts">
+  <div><dt>Status</dt><dd>{{template "status" .Project}}</dd></div>
+  {{with .MarkText}}<div><dt>Mark</dt><dd class="mark">{{.}}</dd></div>{{end}}
+  {{if .MarkedAt}}<div><dt>Completed</dt><dd>{{date .MarkedAt}}</dd></div>{{end}}
+  {{if not .StartedAt.IsZero}}<div><dt>Started</dt><dd>{{date (ptr .StartedAt)}}</dd></div>{{end}}
+  {{if .HasApp}}<div><dt>App</dt><dd>{{if .Live}}<span class="badge live">live</span>{{else}}<span class="muted">offline</span>{{end}}</dd></div>{{end}}
+</dl>
+<div class="actions">
+  {{if and .HasApp .Live}}<a class="btn primary" href="/{{.Key}}/">Open the app</a>{{end}}
+  {{with .Repo}}<a class="btn{{if not (and $.HasApp $.Live)}} primary{{end}}" href="{{.}}">Source on GitHub</a>{{end}}
+  <a class="btn" href="/">All projects</a>
+</div>
+{{with .Screenshot}}<img class="shot" src="{{.}}" alt="Screenshot of {{$.Title}}">{{end}}
+{{end}}

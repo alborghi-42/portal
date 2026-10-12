@@ -1,0 +1,27 @@
+# Read by the portal at runtime from the main branch (PROJECTS_URL), so edits here go
+# live within ~10 minutes without a deploy. Status, mark and dates come from the 42 API;
+# this file only adds what the intra does not know.
+#
+# A project's key is its URL: 42.bombatomica64.dev/<key>. `port` must match the
+# `projects:` list in CodeDrevia/simple-server apps/portal42/values.yaml, which is what
+# actually routes /<key> to lorenzo-dev:<port>. Ports are a fixed block from 4201.
+
+login: alborghi
+cursus: 21
+
+# Intra slugs left off the index (glob patterns).
+hide:
+  - exam-rank-*
+  - 42cursus-rushes
+  - 42_collaborative_resume
+  - work-experience-i
+
+projects:
+  hypertube:
+    title: Hypertube
+    description: >-
+      Streaming web app: search public torrents, stream the video while it downloads,
+      with subtitles, OAuth login and comments.
+    stack: [Go, Angular, PostgreSQL]
+    repo: https://github.com/alborghi-42/hypertube
+    port: 4201
