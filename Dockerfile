@@ -8,5 +8,5 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /portal .
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /portal /portal
 EXPOSE 8080
-USER nonroot
+USER 65532:65532
 ENTRYPOINT ["/portal"]
