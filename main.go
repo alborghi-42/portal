@@ -1,8 +1,8 @@
 // Command portal serves 42.bombatomica64.dev: an index of my 42 projects (status and
 // marks from the intra, the rest from projects.yaml) and an info page per project.
 //
-// Traefik routes /<project> to the app itself on lorenzo-dev and, when the app is down
-// (502-504), its errors middleware fetches /<project>/about?status=<code> from here.
+// /<project> is the app itself: the portal reverse-proxies it to APP_HOST:<port> (the
+// port comes from projects.yaml) and shows the info page instead when the app is down.
 package main
 
 import (
@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -57,32 +56,41 @@ func main() {
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		render(w, http.StatusOK, "index", catalog.Projects())
 	})
-	// Projects without a route of their own reach the portal at /<key> through the
-	// catch-all Ingress: send them to their info page.
-	mux.HandleFunc("GET /{project}", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/"+r.PathValue("project")+"/about", http.StatusFound)
-	})
-	mux.HandleFunc("GET /{project}/{rest...}", func(w http.ResponseWriter, r *http.Request) {
-		key := r.PathValue("project")
-		if r.PathValue("rest") != "about" {
-			http.Redirect(w, r, "/"+key+"/about", http.StatusFound)
-			return
-		}
+	info := func(w http.ResponseWriter, status int, key string, offline bool) {
 		p, ok := catalog.Project(key)
 		if !ok {
 			render(w, http.StatusNotFound, "notfound", key)
 			return
 		}
-		// Set by the Traefik errors middleware: the app answered (or failed with) this.
-		code, _ := strconv.Atoi(r.URL.Query().Get("status"))
-		if code >= 500 {
+		if offline {
 			p.Live = false
 		}
-		render(w, http.StatusOK, "project", struct {
+		render(w, status, "project", struct {
 			Project
 			Offline bool
-		}{p, code >= 500})
+		}{p, offline})
+	}
+	proxy := newAppProxy(os.Getenv("APP_HOST"), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Retry-After", "300")
+		info(w, http.StatusServiceUnavailable, r.PathValue("project"), true)
 	})
+
+	mux.HandleFunc("GET /{project}/about", func(w http.ResponseWriter, r *http.Request) {
+		info(w, http.StatusOK, r.PathValue("project"), false)
+	})
+	// Everything else under /<key> is the app itself, any method, websockets included.
+	// Projects without an app go to their info page.
+	app := func(w http.ResponseWriter, r *http.Request) {
+		key := r.PathValue("project")
+		port := catalog.Port(key)
+		if port == 0 || proxy == nil {
+			http.Redirect(w, r, "/"+key+"/about", http.StatusFound)
+			return
+		}
+		proxy.ServeHTTP(w, withPort(r, port))
+	}
+	mux.HandleFunc("/{project}", app)
+	mux.HandleFunc("/{project}/{rest...}", app)
 
 	addr := ":" + cmpOr(os.Getenv("PORT"), "8080")
 	srv := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 10 * time.Second}

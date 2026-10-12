@@ -226,6 +226,13 @@ func (c *Catalog) Project(key string) (Project, bool) {
 	return Project{}, false
 }
 
+// Port is the app port of a project, 0 when it has none. Cheap: no intra, no probing.
+func (c *Catalog) Port(key string) int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.cfg.Projects[key].Port
+}
+
 // probe marks a project Live when something accepts connections on its port.
 func (c *Catalog) probe(ps []Project) {
 	if c.appHost == "" {

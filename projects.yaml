@@ -2,9 +2,9 @@
 # live within ~10 minutes without a deploy. Status, mark and dates come from the 42 API;
 # this file only adds what the intra does not know.
 #
-# A project's key is its URL: 42.bombatomica64.dev/<key>. `port` must match the
-# `projects:` list in CodeDrevia/simple-server apps/portal42/values.yaml, which is what
-# actually routes /<key> to lorenzo-dev:<port>. Ports are a fixed block from 4201.
+# A project's key is its URL: 42.bombatomica64.dev/<key>. With a `port`, the portal
+# proxies /<key> to lorenzo-dev (100.107.70.55):<port>; the app must serve under the
+# /<key> base path. Ports are a fixed block from 4201.
 
 login: alborghi
 cursus: 21
