@@ -52,6 +52,14 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	// Before the /{project} routes, so browsers asking for /favicon.ico get the icon, not a proxy redirect.
+	favicon := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Write([]byte(faviconSVG))
+	}
+	mux.HandleFunc("GET /favicon.ico", favicon)
+	mux.HandleFunc("GET /favicon.svg", favicon)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		render(w, http.StatusOK, "index", catalog.Projects())
@@ -120,3 +128,5 @@ var funcs = template.FuncMap{
 		return t.Format("Jan 2006")
 	},
 }
+
+const faviconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#0e0f11"/><text x="16" y="22" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-weight="700" font-size="16" fill="#00babc">42</text></svg>`
